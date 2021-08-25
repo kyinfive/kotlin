@@ -36218,6 +36218,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             public void testSynchronizedOnInline() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/inline/synchronizedOnInline.kt");
             }
+
+            @Test
+            @TestMetadata("synchronizedOnSuspend.kt")
+            public void testSynchronizedOnSuspend() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/inline/synchronizedOnSuspend.kt");
+            }
         }
 
         @Nested
