@@ -5,7 +5,6 @@
 
 package test.ranges
 
-import test.ranges.testProgressionCollection
 import kotlin.math.min
 import kotlin.math.sign
 import kotlin.test.*
@@ -15,8 +14,8 @@ public class URangeTest {
     @Test
     fun uIntProgressionCollection() {
         testProgressionCollection(
-            0U..10U, -10..10,
-            UIntProgression::fromClosedRange,
+            0U..5U, -3..3,
+            UIntProgression.Companion::fromClosedRange,
             { cur: UInt, step ->
                 when {
                     step > 0 -> (cur + step.toUInt()).takeIf { cur <= UInt.MAX_VALUE - step.toUInt() }
@@ -41,7 +40,7 @@ public class URangeTest {
     fun uLongProgressionCollection() {
         testProgressionCollection(
             0UL..10UL, -10L..10L,
-            ULongProgression::fromClosedRange,
+            ULongProgression.Companion::fromClosedRange,
             { cur: ULong, step ->
                 when {
                     step > 0L -> (cur + step.toULong()).takeIf { cur <= ULong.MAX_VALUE - step.toULong() }
@@ -57,7 +56,7 @@ public class URangeTest {
                 assertEquals(Int.MAX_VALUE, (start..finish).size)
                 assertEquals(Int.MAX_VALUE, (finish downTo start).size)
             }
-            for (finish in ((ULong.MAX_VALUE - 100UL)..ULong.MAX_VALUE)) {
+            for (finish in (ULong.MAX_VALUE - 100UL)..ULong.MAX_VALUE) {
                 for (step in 1L..10L) {
                     assertEquals(Int.MAX_VALUE, (start..finish step step).size)
                     assertEquals(Int.MAX_VALUE, (finish downTo start step step).size)

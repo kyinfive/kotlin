@@ -14,7 +14,8 @@ fun <T : Comparable<T>, S> testProgressionCollection(
     stepRange: Iterable<S>,
     makeRange: (T, T, S) -> Collection<T>,
     nextItem: (T, S) -> T?,
-    sign: (S) -> Int
+    sign: (S) -> Int,
+    fixItem: (T) -> T = { it },
 ) {
     for (start in limitRange)
         for (finish in limitRange)
@@ -22,7 +23,7 @@ fun <T : Comparable<T>, S> testProgressionCollection(
                 val s = sign(step).takeIf { it != 0 } ?: continue
                 val range = makeRange(start, finish, step)
                 val listRange = generateSequence(start) { nextItem(it, step) }
-                    .takeWhile { if (s > 0) start <= it && it <= finish else start >= it && it >= finish }.toList()
+                    .takeWhile { if (s > 0) start <= it && it <= finish else start >= it && it >= finish }.map(fixItem).toList()
                 try {
                     collectionWithIterating(listRange, range, limitRange)
                     collectionWithoutIterating(listRange, object : Collection<T> {
@@ -44,7 +45,7 @@ fun <T : Comparable<T>, S> testProgressionCollection(
             }
 }
 
-private fun <T> collectionWithIterating(
+private fun <T : Any> collectionWithIterating(
     listRange: List<T>,
     range: Collection<T>,
     bigRange: Collection<T>
@@ -53,7 +54,7 @@ private fun <T> collectionWithIterating(
     collectionWithoutIterating(listRange, range, bigRange)
 }
 
-private fun <T> collectionWithoutIterating(
+private fun <T : Any> collectionWithoutIterating(
     listRange: List<T>,
     range: Collection<T>,
     bigRange: Collection<T>
@@ -64,11 +65,9 @@ private fun <T> collectionWithoutIterating(
     for (element in bigRange) {
         assertEquals(element in listRange, element in range, "$element in (expected $listRange) (found $range)")
     }
-    for (element in bigRange) {
-        assertEquals(element in listRange, element in range)
-    }
-    repeat(100) {
-        for (length in 0..3) {
+    assertTrue(range.containsAll(emptyList()))
+    repeat(10) {
+        for (length in 1..3) {
             val elements = List(length) { bigRange.random() }
             assertEquals(listRange.containsAll(elements), range.containsAll(elements))
         }
@@ -122,22 +121,22 @@ public class RangeTest {
     @Test
     fun intProgressionCollection() {
         val min = Int.MIN_VALUE
-        val nearMin = min..(min + 10)
+        val nearMin = min..(min + 2)
         val max = Int.MAX_VALUE
-        val nearMax = (max - 10)..max
-        val nearZero = -10..10
-        val bigSteps = (-10..10).minus(0).map { max / it }.flatMap { (it - 10)..(it + 10) }
+        val nearMax = (max - 2)..max
+        val nearZero = -2..2
+        val bigSteps = (-10..10).minus(0).map { max / it }.flatMap { (it - 2)..(it + 2) }
         val smallSteps = nearZero
         testProgressionCollection(
             nearZero, smallSteps,
-            IntProgression::fromClosedRange,
+            IntProgression.Companion::fromClosedRange,
             { cur: Int, step -> if ((step > 0 && cur <= max - step) || (step <= 0 && cur >= min - step)) cur + step else null },
             { it.sign }
         )
         testProgressionCollectionSizeOnly(
             nearMin + nearZero + nearMax,
             smallSteps + bigSteps - 0,
-            IntProgression::fromClosedRange,
+            IntProgression.Companion::fromClosedRange,
             Int::toLong,
             IntProgression::last
         )
@@ -146,31 +145,31 @@ public class RangeTest {
             nearMin + nearZero.filter { it <= 0 },
             nearZero.filter { it >= -1 } + nearMax,
             listOf(max),
-            IntProgression::fromClosedRange
+            IntProgression.Companion::fromClosedRange
         )
     }
 
     @Test
     fun longProgressionCollection() {
-        val nearZero = -10L..10L
+        val nearZero = -2L..2L
         val smallSteps = nearZero
         val min = Int.MIN_VALUE.toLong()
         val nearMin = (min - 10L)..(min + 10L)
-        val nearLongMin = Long.MIN_VALUE..(Long.MIN_VALUE + 10L)
+        val nearLongMin = Long.MIN_VALUE..(Long.MIN_VALUE + 2L)
         val max = Int.MAX_VALUE.toLong()
-        val nearLongMax = (Long.MAX_VALUE - 10L)..Long.MAX_VALUE
-        val nearMax = (max - 10L)..(max + 10L)
-        val bigSteps = (-10L..10L).minus(0L).map { max / it }.flatMap { (it - 10L)..(it + 10L) }
+        val nearLongMax = (Long.MAX_VALUE - 2L)..Long.MAX_VALUE
+        val nearMax = (max - 2L)..(max + 2L)
+        val bigSteps = (-10L..10L).minus(0L).map { max / it }.flatMap { (it - 2L)..(it + 2L) }
         testProgressionCollection(
             nearZero, nearZero,
-            LongProgression::fromClosedRange,
+            LongProgression.Companion::fromClosedRange,
             { cur: Long, step -> if ((step > 0L && cur <= max - step) || (step <= 0L && cur >= min - step)) cur + step else null },
             { it.sign }
         )
         testProgressionCollectionSizeOnly(
             nearMin + nearZero + nearMax,
             smallSteps + bigSteps - 0L,
-            LongProgression::fromClosedRange,
+            LongProgression.Companion::fromClosedRange,
             { this },
             LongProgression::last
         )
@@ -185,12 +184,13 @@ public class RangeTest {
     @Test
     fun charProgressionCollection() {
         testProgressionCollection(
-            'a'..'z', -10..10,
-            CharProgression::fromClosedRange,
+            'a'..'d', -2..2,
+            CharProgression.Companion::fromClosedRange,
             { cur: Char, step ->
                 if (step > 0 && cur <= Char.MAX_VALUE - step || step <= 0 && cur >= Char.MIN_VALUE - step) cur + step else null
             },
-            { it.sign }
+            { it.sign },
+            { it.code.toChar() } // workaround Char boxing bug in js-v1 backend
         )
     }
 
