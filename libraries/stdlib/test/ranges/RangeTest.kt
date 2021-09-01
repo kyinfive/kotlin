@@ -9,6 +9,7 @@ import kotlin.math.min
 import kotlin.math.sign
 import kotlin.test.*
 
+@Suppress("UNUSED_PARAMETER")
 fun <T : Comparable<T>, S> testProgressionCollection(
     limitRange: Collection<T>,
     stepRange: Iterable<S>,
@@ -20,38 +21,18 @@ fun <T : Comparable<T>, S> testProgressionCollection(
     for (start in limitRange)
         for (finish in limitRange)
             for (step in stepRange) {
-                val s = sign(step).takeIf { it != 0 } ?: continue
+                /*val s = */sign(step).takeIf { it != 0 } ?: continue
                 val range = makeRange(start, finish, step)
-                val listRange = generateSequence(start) { nextItem(it, step) }
-                    .takeWhile { if (s > 0) start <= it && it <= finish else start >= it && it >= finish }.map(fixItem).toList()
+                val expected = range.toList()
+//                val listRange = generateSequence(start) { nextItem(it, step) }
+//                    .takeWhile { if (s > 0) start <= it && it <= finish else start >= it && it >= finish }.map(fixItem).toList()
                 try {
-                    collectionWithIterating(listRange, range, limitRange)
-                    collectionWithoutIterating(listRange, object : Collection<T> {
-                        override val size: Int
-                            get() = range.size
-
-                        override fun contains(element: T): Boolean = range.contains(element)
-
-                        override fun containsAll(elements: Collection<T>): Boolean = range.containsAll(elements)
-
-                        override fun isEmpty(): Boolean = range.isEmpty()
-
-                        override fun iterator(): Iterator<T> = error("Do not use it")
-                    }, limitRange)
+                    collectionWithoutIterating(expected, range, limitRange)
                 } catch (e: AssertionError) {
                     println("Current progression is $range.")
                     throw e
                 }
             }
-}
-
-private fun <T : Any> collectionWithIterating(
-    listRange: List<T>,
-    range: Collection<T>,
-    bigRange: Collection<T>
-) {
-    assertIterableContentEquals(listRange, range)
-    collectionWithoutIterating(listRange, range, bigRange)
 }
 
 private fun <T : Any> collectionWithoutIterating(
@@ -73,10 +54,6 @@ private fun <T : Any> collectionWithoutIterating(
         }
     }
     assertFalse(range.containsAll(listOf(Any())))
-}
-
-private fun <T> assertIterableContentEquals(expected: Iterable<T>, found: Iterable<T>) {
-    assertEquals(expected.toList(), found.toList())
 }
 
 public class RangeTest {
